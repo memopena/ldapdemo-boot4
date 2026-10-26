@@ -1,45 +1,53 @@
 # ldapdemo-boot4
 
-LDAP based user authentication with Spring Security and Spring Boot, updated to current versions.
-This is the modernized version of [ldapdemo](https://github.com/memopena/ldapdemo) (Spring Boot 1.5, Java 8).
+![Java](https://img.shields.io/badge/Java-25-orange)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.2-6DB33F)
+![Spring Security](https://img.shields.io/badge/Spring%20Security-7-6DB33F)
 
-## Stack
+Reference implementation of LDAP authentication and role based authorization with Spring Security 7 and Spring Boot 4. The application runs an embedded LDAP directory, authenticates users with a bind operation and maps LDAP groups to application roles.
 
-- Java 25 (LTS)
-- Spring Boot 4.1.2 / Spring Security 7
-- Embedded LDAP server (UnboundID) loaded from `src/main/resources/users.ldif`
-- Thymeleaf 3 with Layout Dialect
-- Spring Data JPA with in-memory HSQLDB
+It is a modernization of [ldapdemo](https://github.com/memopena/ldapdemo), originally built on Spring Boot 1.5 and Java 8.
 
-## Run
+## Features
+
+- Embedded LDAP server (UnboundID) seeded from an LDIF file
+- Bind authentication with group based roles (`USER`, `ADMIN`)
+- `SecurityFilterChain` configuration with the lambda DSL and CSRF protection
+- Server side UI with Thymeleaf 3
+- User management backed by Spring Data JPA and HSQLDB
+- Integration tests for authentication and access rules
+
+## Getting started
+
+Requirements: JDK 25. Maven is provided through the wrapper.
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
-Open http://localhost:8081 and sign in with one of the LDAP users:
+Open http://localhost:8081 and sign in with one of the demo accounts:
 
-| User  | Password | Role  | Access                         |
-|-------|----------|-------|--------------------------------|
-| user1 | memo     | USER  | User list and create form      |
-| user2 | memo     | ADMIN | Everything under `/user/**`    |
+| User  | Password | Role  | Access                                  |
+|-------|----------|-------|-----------------------------------------|
+| user1 | memo     | USER  | User list and create form               |
+| user2 | memo     | ADMIN | Full access, including view and delete  |
 
-## Test
+Run the tests with:
 
 ```bash
 ./mvnw test
 ```
 
-The tests authenticate against the embedded LDAP server and check the role based access rules.
+## Configuration
 
-## What changed from the original
+| File                                 | Purpose                                     |
+|--------------------------------------|---------------------------------------------|
+| `DemoSecurityConfig.java`            | Access rules, login flow and LDAP wiring    |
+| `src/main/resources/users.ldif`      | Directory content: users and role groups    |
+| `src/main/resources/application.properties` | Server port and persistence settings |
 
-- Spring Boot 1.5.3 to 4.1.2, Java 8 to 25.
-- `javax.*` to `jakarta.*` (persistence, validation).
-- `WebSecurityConfigurerAdapter` replaced by a `SecurityFilterChain` bean using the lambda DSL.
-- Embedded ApacheDS (removed from Spring Security) replaced by UnboundID via `EmbeddedLdapServerContextSourceFactoryBean` and `LdapBindAuthenticationManagerFactory`.
-- CSRF protection enabled. Logout and delete are now POST forms.
-- Constructor injection instead of field injection.
-- `@EnableWebMvc` removed so Spring Boot's MVC auto-configuration applies.
-- Unused dependencies removed (JSP, JSTL, Guava, Commons Lang, springloaded, old jQuery).
-- The JPA table is now `app_user`, since `user` is a reserved word.
+To use an external directory, replace the embedded context source in `DemoSecurityConfig` with a `DefaultSpringSecurityContextSource` pointing to your LDAP URL.
+
+## Upgrade notes
+
+Main changes from the original project: Jakarta EE namespaces, Spring Security 7 configuration model, UnboundID in place of ApacheDS, constructor injection, CSRF enabled with POST based logout and delete, and removal of unused dependencies.
